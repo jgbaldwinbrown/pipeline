@@ -61,14 +61,8 @@ func (p Pipeline_internal) Run(input io.Reader, output io.Writer) {
 
 func main() {
 	p := Pipeline {
-		[]string{"echo", "-e", "apple\n", "banana\n", "carrot\n"},
-		[]string{"grep", "banana\\|carrot"},
+		{"echo", "-e", "apple\n", "banana\n", "carrot\n"},
+		{"grep", "banana\\|carrot"},
 	}
-	/*
-	p := Pipeline {
-		exec.Command("echo", "-e", "apple\n", "banana\n", "carrot\n"),
-		exec.Command("grep", "banana\\|carrot"),
-	}
-	*/
 	p.Run(nil, os.Stdout)
 }
