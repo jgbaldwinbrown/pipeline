@@ -12,17 +12,24 @@ type Pipeline_entry struct {
 	Pipe_writer *io.PipeWriter;
 }
 
-type Pipeline []Pipeline_entry
+type Pipeline [][]string
 
-func Make_pipeline(cmds [][]string) Pipeline {
-	out := make(Pipeline, 0)
+type Pipeline_internal []Pipeline_entry
+
+func (p Pipeline) Run(input io.Reader, output io.Writer) {
+	pi := Make_pipeline(p)
+	pi.Run(input, output)
+}
+
+func Make_pipeline(cmds Pipeline) Pipeline_internal {
+	out := make(Pipeline_internal, 0)
 	for _, e := range cmds {
 		out = append(out, Pipeline_entry{Cmd: exec.Command(e[0], e[1:]...), Pipe_reader: nil, Pipe_writer: nil})
 	}
 	return out
 }
 
-func (p Pipeline) Run(input io.Reader, output io.Writer) {
+func (p Pipeline_internal) Run(input io.Reader, output io.Writer) {
 	for i, e := range p {
 		if i == 0 {
 			e.Cmd.Stdin = input
@@ -53,10 +60,10 @@ func (p Pipeline) Run(input io.Reader, output io.Writer) {
 }
 
 func main() {
-	p := Make_pipeline([][]string {
+	p := Pipeline {
 		[]string{"echo", "-e", "apple\n", "banana\n", "carrot\n"},
 		[]string{"grep", "banana\\|carrot"},
-	})
+	}
 	/*
 	p := Pipeline {
 		exec.Command("echo", "-e", "apple\n", "banana\n", "carrot\n"),
