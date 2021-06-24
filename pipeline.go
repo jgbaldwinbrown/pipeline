@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"bytes"
 	"os/exec"
 	"os"
 	"io"
@@ -30,6 +32,11 @@ func Make_pipeline(cmds Pipeline) Pipeline_internal {
 }
 
 func (p Pipeline_internal) Run(input io.Reader, output io.Writer) {
+	p.Start(input, output)
+	p.Finish()
+}
+
+func (p Pipeline_internal) Start(input io.Reader, output io.Writer) {
 	for i, e := range p {
 		if i == 0 {
 			e.Cmd.Stdin = input
@@ -48,6 +55,15 @@ func (p Pipeline_internal) Run(input io.Reader, output io.Writer) {
 	for _, e := range p {
 		e.Cmd.Start()
 	}
+}
+
+func (p Pipeline) Start(input io.Reader, output io.Writer) Pipeline_internal {
+	out := Make_pipeline(p)
+	out.Start(input, output)
+	return out
+}
+
+func (p Pipeline_internal) Finish() {
 	for _, e := range p {
 		e.Cmd.Wait()
 		if e.Pipe_reader != nil {
@@ -61,8 +77,23 @@ func (p Pipeline_internal) Run(input io.Reader, output io.Writer) {
 
 func main() {
 	p := Pipeline {
-		{"echo", "-e", "apple\n", "banana\n", "carrot\n"},
+		{"echo", "-e", "apple\nbanana\ncarrot\n"},
 		{"grep", "banana\\|carrot"},
 	}
+	p2 := p.Start(nil, os.Stdout)
+	p2.Finish()
 	p.Run(nil, os.Stdout)
+	p = Pipeline {
+		{"awk", "{print($2, $3)}"},
+		{"grep", "banana"},
+	}
+	var b bytes.Buffer
+	var b2 bytes.Buffer
+	b.WriteString("apple	banana	carrot\n")
+	for i:=0; i<1000000; i++ {
+		b.WriteString("apple	banana	banana apple\n")
+	}
+	b.WriteString("apple	grape	toucan apple\n")
+	p.Run(&b, &b2)
+	fmt.Printf("%v", b2.String())
 }
