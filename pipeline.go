@@ -1,10 +1,7 @@
 package pipeline
 
 import (
-	"fmt"
-	"bytes"
 	"os/exec"
-	"os"
 	"io"
 )
 
